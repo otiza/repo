@@ -1,10 +1,14 @@
 import random
 import sqlite3
 
+from operations import header, pause
+
 
 def seed_data(conn: sqlite3.Connection) -> None:
+    header("Charger des données de test")
     if conn.execute("SELECT COUNT(*) FROM teams").fetchone()[0] > 0:
         print("Des données existent déjà.")
+        pause()
         return
     teams = ["Lions", "Tigres", "Panthères"]
     positions = [
@@ -39,3 +43,4 @@ def seed_data(conn: sqlite3.Connection) -> None:
             )
     conn.commit()
     print("Données de démonstration ajoutées.")
+    pause()

@@ -1,8 +1,25 @@
+import os
 import random
 import sqlite3
-from typing import Optional
+from typing import Iterable, Optional
 
 INJURY_CHANCE = 0.10
+DIVIDER = "-" * 50
+
+
+def clear_screen() -> None:
+    os.system("cls" if os.name == "nt" else "clear")
+
+
+def pause() -> None:
+    input("\nAppuyez sur Entrée pour continuer...")
+
+
+def header(title: str) -> None:
+    clear_screen()
+    print(DIVIDER)
+    print(title)
+    print(DIVIDER)
 
 
 def ask_int(prompt: str, minimum: Optional[int] = None, maximum: Optional[int] = None) -> int:
@@ -36,9 +53,11 @@ def choose_from_list(rows: list[sqlite3.Row], title: str) -> Optional[int]:
 
 
 def create_team(conn: sqlite3.Connection) -> None:
+    header("Créer une équipe")
     name = input("Nom de l'équipe: ").strip()
     if not name:
         print("Nom obligatoire.")
+        pause()
         return
     try:
         conn.execute("INSERT INTO teams (name) VALUES (?)", (name,))
@@ -46,19 +65,23 @@ def create_team(conn: sqlite3.Connection) -> None:
         print("Équipe créée.")
     except sqlite3.IntegrityError:
         print("Nom déjà utilisé.")
+    pause()
 
 
 def list_teams(conn: sqlite3.Connection) -> list[sqlite3.Row]:
+    header("Liste des équipes")
     teams = list_rows(conn, "SELECT id, name FROM teams ORDER BY name")
     if not teams:
         print("Aucune équipe.")
     else:
         for team in teams:
             print(f"[{team['id']}] {team['name']}")
+    pause()
     return teams
 
 
 def update_team(conn: sqlite3.Connection) -> None:
+    header("Modifier une équipe")
     teams = list_teams(conn)
     team_id = choose_from_list(teams, "Modifier une équipe")
     if not team_id:
@@ -66,13 +89,16 @@ def update_team(conn: sqlite3.Connection) -> None:
     name = input("Nouveau nom: ").strip()
     if not name:
         print("Nom obligatoire.")
+        pause()
         return
     conn.execute("UPDATE teams SET name = ? WHERE id = ?", (name, team_id))
     conn.commit()
     print("Équipe mise à jour.")
+    pause()
 
 
 def delete_team(conn: sqlite3.Connection) -> None:
+    header("Supprimer une équipe")
     teams = list_teams(conn)
     team_id = choose_from_list(teams, "Supprimer une équipe")
     if not team_id:
@@ -80,12 +106,15 @@ def delete_team(conn: sqlite3.Connection) -> None:
     conn.execute("DELETE FROM teams WHERE id = ?", (team_id,))
     conn.commit()
     print("Équipe supprimée.")
+    pause()
 
 
 def create_position(conn: sqlite3.Connection) -> None:
+    header("Créer un poste")
     name = input("Nom du poste: ").strip()
     if not name:
         print("Nom obligatoire.")
+        pause()
         return
     min_vitesse = ask_int("Min vitesse (0-100): ", 0, 100)
     min_endurance = ask_int("Min endurance (0-100): ", 0, 100)
@@ -103,9 +132,11 @@ def create_position(conn: sqlite3.Connection) -> None:
         print("Poste créé.")
     except sqlite3.IntegrityError:
         print("Nom déjà utilisé.")
+    pause()
 
 
 def list_positions(conn: sqlite3.Connection) -> list[sqlite3.Row]:
+    header("Liste des postes")
     rows = list_rows(
         conn,
         """
@@ -121,10 +152,12 @@ def list_positions(conn: sqlite3.Connection) -> list[sqlite3.Row]:
                 f"[{pos['id']}] {pos['name']} (V:{pos['min_vitesse']} E:{pos['min_endurance']} "
                 f"F:{pos['min_force']} T:{pos['min_technique']})"
             )
+    pause()
     return rows
 
 
 def update_position(conn: sqlite3.Connection) -> None:
+    header("Modifier un poste")
     rows = list_positions(conn)
     pos_id = choose_from_list(rows, "Modifier un poste")
     if not pos_id:
@@ -132,6 +165,7 @@ def update_position(conn: sqlite3.Connection) -> None:
     name = input("Nouveau nom: ").strip()
     if not name:
         print("Nom obligatoire.")
+        pause()
         return
     min_vitesse = ask_int("Min vitesse (0-100): ", 0, 100)
     min_endurance = ask_int("Min endurance (0-100): ", 0, 100)
@@ -147,9 +181,11 @@ def update_position(conn: sqlite3.Connection) -> None:
     )
     conn.commit()
     print("Poste mis à jour.")
+    pause()
 
 
 def delete_position(conn: sqlite3.Connection) -> None:
+    header("Supprimer un poste")
     rows = list_positions(conn)
     pos_id = choose_from_list(rows, "Supprimer un poste")
     if not pos_id:
@@ -157,9 +193,11 @@ def delete_position(conn: sqlite3.Connection) -> None:
     conn.execute("DELETE FROM positions WHERE id = ?", (pos_id,))
     conn.commit()
     print("Poste supprimé.")
+    pause()
 
 
 def create_player(conn: sqlite3.Connection) -> None:
+    header("Créer un joueur")
     teams = list_teams(conn)
     team_id = choose_from_list(teams, "Choisir l'équipe")
     if not team_id:
@@ -167,6 +205,7 @@ def create_player(conn: sqlite3.Connection) -> None:
     name = input("Nom du joueur: ").strip()
     if not name:
         print("Nom obligatoire.")
+        pause()
         return
     speed = ask_int("Vitesse (0-100): ", 0, 100)
     endurance = ask_int("Endurance (0-100): ", 0, 100)
@@ -193,9 +232,11 @@ def create_player(conn: sqlite3.Connection) -> None:
     )
     conn.commit()
     print("Joueur créé.")
+    pause()
 
 
 def list_players(conn: sqlite3.Connection, team_id: Optional[int] = None) -> list[sqlite3.Row]:
+    header("Liste des joueurs")
     query = (
         """
         SELECT players.id, players.name, teams.name AS team_name, players.speed, players.endurance,
@@ -223,10 +264,12 @@ def list_players(conn: sqlite3.Connection, team_id: Optional[int] = None) -> lis
                 f"V:{player['speed']} E:{player['endurance']} F:{player['force']} "
                 f"T:{player['technique']} Blessure:{bless}"
             )
+    pause()
     return rows
 
 
 def update_player(conn: sqlite3.Connection) -> None:
+    header("Modifier un joueur")
     rows = list_players(conn)
     player_id = choose_from_list(rows, "Modifier un joueur")
     if not player_id:
@@ -234,6 +277,7 @@ def update_player(conn: sqlite3.Connection) -> None:
     player = conn.execute("SELECT * FROM players WHERE id = ?", (player_id,)).fetchone()
     if not player:
         print("Joueur introuvable.")
+        pause()
         return
     name = input(f"Nom ({player['name']}): ").strip() or player["name"]
     speed = ask_int(f"Vitesse ({player['speed']}): ", 0, 100)
@@ -262,9 +306,11 @@ def update_player(conn: sqlite3.Connection) -> None:
     )
     conn.commit()
     print("Joueur mis à jour.")
+    pause()
 
 
 def delete_player(conn: sqlite3.Connection) -> None:
+    header("Supprimer un joueur")
     rows = list_players(conn)
     player_id = choose_from_list(rows, "Supprimer un joueur")
     if not player_id:
@@ -272,6 +318,7 @@ def delete_player(conn: sqlite3.Connection) -> None:
     conn.execute("DELETE FROM players WHERE id = ?", (player_id,))
     conn.commit()
     print("Joueur supprimé.")
+    pause()
 
 
 def decrement_injuries(conn: sqlite3.Connection) -> None:
@@ -288,9 +335,11 @@ def decrement_injuries(conn: sqlite3.Connection) -> None:
 
 
 def play_match(conn: sqlite3.Connection) -> None:
+    header("Jouer un match")
     teams = list_teams(conn)
     if len(teams) < 2:
         print("Il faut au moins deux équipes.")
+        pause()
         return
     team1_id = choose_from_list(teams, "Choisir l'équipe 1")
     if not team1_id:
@@ -298,6 +347,7 @@ def play_match(conn: sqlite3.Connection) -> None:
     team2_id = choose_from_list(teams, "Choisir l'équipe 2")
     if not team2_id or team2_id == team1_id:
         print("Choix invalide.")
+        pause()
         return
     score1 = ask_int("Score équipe 1: ", 0)
     score2 = ask_int("Score équipe 2: ", 0)
@@ -319,6 +369,7 @@ def play_match(conn: sqlite3.Connection) -> None:
     )
     if not players:
         print("Aucun joueur pour ce match.")
+        pause()
         return
 
     for player in players:
@@ -351,9 +402,11 @@ def play_match(conn: sqlite3.Connection) -> None:
     conn.commit()
     decrement_injuries(conn)
     print("Match enregistré.")
+    pause()
 
 
 def list_matches(conn: sqlite3.Connection) -> None:
+    header("Historique des matchs")
     rows = list_rows(
         conn,
         """
@@ -367,9 +420,11 @@ def list_matches(conn: sqlite3.Connection) -> None:
     )
     if not rows:
         print("Aucun match.")
+        pause()
         return
     for match in rows:
         print(
             f"[{match['id']}] {match['team1']} {match['score1']} - "
             f"{match['score2']} {match['team2']} ({match['played_at']})"
         )
+    pause()
